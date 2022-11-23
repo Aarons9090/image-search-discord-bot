@@ -39,19 +39,27 @@ async def on_message(message):
 
         # indexing string
         url_start = element.find("https")
+        if not url_start:
+            print("no image")
+            await message.channel.send("No image found")
         url_end = element[url_start:].find('"')
         image_url = element[url_start: url_start + url_end]
 
-        # download image
-        image_response = requests.get(image_url, stream=True)
-        with open('img.png', 'wb') as out_file:
-            shutil.copyfileobj(image_response.raw, out_file)
+        try:
+            # download image
+            image_response = requests.get(image_url, stream=True)
+            with open('img.png', 'wb') as out_file:
+                shutil.copyfileobj(image_response.raw, out_file)
 
-        # send image
-        with open("img.png", "rb") as f:
-            pic = discord.File(f)
-            await message.channel.send(file=pic)
-        del image_response
+            # send image
+            with open("img.png", "rb") as f:
+                pic = discord.File(f)
+                await message.channel.send(file=pic)
+
+            del image_response
+
+        except Exception:
+            await message.channel.send("No image found")
 
 
 client.run(config.get("TOKEN"))
