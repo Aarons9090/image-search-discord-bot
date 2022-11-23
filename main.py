@@ -35,13 +35,14 @@ async def on_message(message):
         # parse image link from response
         soup = BeautifulSoup(search_response.content, "html.parser")
         element = str(
-            soup.select("#mmComponent_images_2 > ul:nth-child(1) > li:nth-child(1) > div > div.imgpt > a > div > img"))
+            soup.select("#mmComponent_images_2 > ul:nth-child(1) > li:nth-child(1) > div > div.imgpt > a"))
 
         # indexing string
-        url_start = element.find("https")
+        url_start = element.find('murl":"') + 7
         if not url_start:
             print("no image")
             await message.channel.send("No image found")
+
         url_end = element[url_start:].find('"')
         image_url = element[url_start: url_start + url_end]
 
@@ -49,7 +50,13 @@ async def on_message(message):
             # download image
             image_response = requests.get(image_url, stream=True)
             with open('img.png', 'wb') as out_file:
-                shutil.copyfileobj(image_response.raw, out_file)
+                if not image_response.ok:
+                    print("no pic")
+                else:
+                    for bit in image_response.iter_content(1024):
+                        if not bit:
+                            break
+                        out_file.write(bit)
 
             # send image
             with open("img.png", "rb") as f:
@@ -58,7 +65,8 @@ async def on_message(message):
 
             del image_response
 
-        except Exception:
+        except Exception as e:
+            print(e)
             await message.channel.send("No image found")
 
 
